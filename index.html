@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kevin Matt · Content Studio</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #060414;
+    --bg2: #0a0820;
+    --bg3: #0d0b1e;
+    --border: #1e1b4b;
+    --border2: #2d2860;
+    --purple: #7c3aed;
+    --purple-light: #a78bfa;
+    --purple-pale: #c4b5fd;
+    --blue: #0ea5e9;
+    --text: #e2e8f0;
+    --muted: #6b7280;
+    --muted2: #4b5563;
+    --green: #22c55e;
+    --red: #ef4444;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+
+  /* Header */
+  .header { background: linear-gradient(160deg, #0f0c2e 0%, #1a1050 60%, #0f0c2e 100%); padding: 28px 20px 20px; text-align: center; border-bottom: 1px solid var(--border); }
+  .header-eyebrow { font-size: 10px; letter-spacing: 5px; color: #5b4db0; text-transform: uppercase; margin-bottom: 8px; }
+  .header-title { font-size: 26px; font-weight: 800; background: linear-gradient(90deg, #c4b5fd 0%, #818cf8 50%, #67e8f9 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header-sub { margin-top: 6px; color: var(--muted); font-size: 13px; }
+
+  /* Metricool banner */
+  .metricool-bar { background: #0a1628; border-bottom: 1px solid #0c2a4a; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .metricool-bar span { color: var(--blue); font-size: 12px; font-weight: 600; }
+  .metricool-bar button { background: none; border: 1px solid var(--blue); color: var(--blue); border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
+
+  /* Tabs */
+  .tabs { display: flex; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .tab { flex: 1; padding: 13px 6px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-size: 12px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .tab.active { border-bottom-color: var(--purple); color: var(--purple-pale); font-weight: 700; }
+
+  /* Content */
+  .content { max-width: 660px; margin: 0 auto; padding: 22px 18px 80px; }
+  .panel { display: none; flex-direction: column; gap: 18px; animation: fadeIn 0.25s ease; }
+  .panel.active { display: flex; }
+
+  /* Form elements */
+  label { color: #9ca3af; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; display: block; margin-bottom: 6px; }
+  input, textarea, select { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; color-scheme: dark; }
+  textarea { resize: vertical; line-height: 1.7; }
+  input::placeholder, textarea::placeholder { color: #3d3d5c; }
+  input:focus, textarea:focus, select:focus { border-color: var(--purple); }
+
+  /* Buttons */
+  .btn-primary { background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #fff; border: none; border-radius: 10px; padding: 13px 20px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; font-family: inherit; transition: opacity 0.2s; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: var(--purple-light); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .btn-ghost:hover { border-color: var(--purple); }
+  .btn-platform { flex: 1; padding: 10px; background: transparent; color: var(--muted); border: 1px solid var(--border2); border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all 0.15s; }
+  .btn-platform.active { background: #1e1b4b; color: var(--purple-pale); border-color: var(--purple); font-weight: 700; }
+
+  /* Cards */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  /* Image upload */
+  .upload-zone { border: 2px dashed var(--border2); border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; transition: border-color 0.2s; color: var(--purple-light); font-size: 14px; }
+  .upload-zone:hover { border-color: var(--purple); }
+  .upload-zone input[type=file] { display: none; }
+  .image-preview-wrap { position: relative; }
+  .image-preview-wrap img { width: 100%; max-height: 240px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border2); display: block; }
+  .image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .image-thumb-wrap { position: relative; }
+  .image-thumb-wrap img { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border2); display: block; }
+  .img-remove { position: absolute; top: 4px; right: 4px; background: var(--red); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+
+  /* Spinner */
+  .spinner { display: flex; align-items: center; gap: 10px; color: var(--purple-light); padding: 8px 0; }
+  .spinner-dot { width: 18px; height: 18px; border: 2px solid var(--purple); border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+
+  /* Result */
+  .result-text { white-space: pre-wrap; color: var(--text); font-size: 14px; line-height: 1.85; font-family: inherit; }
+  .result-label { color: var(--purple-pale); font-weight: 700; font-size: 13px; }
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Saved posts */
+  .post-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .post-item-header { padding: 14px 16px; cursor: pointer; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .post-item-body { padding: 0 16px 16px; border-top: 1px solid var(--border); animation: fadeIn 0.2s ease; }
+  .badge { font-size: 11px; background: #1e1b4b; color: var(--purple-light); padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .date-label { font-size: 11px; color: var(--muted2); }
+  .empty-state { text-align: center; color: var(--muted); padding: 50px 20px; }
+  .empty-state .emoji { font-size: 40px; margin-bottom: 12px; }
+
+  /* Copy feedback */
+  .copy-ok { border-color: var(--green) !important; color: var(--green) !important; }
+  .copy-err { border-color: var(--red) !important; color: var(--red) !important; }
+
+  /* Info box */
+  .info-box { background: #0d0b1e; border: 1px solid var(--border2); border-radius: 10px; padding: 14px; color: var(--purple-light); font-size: 13px; }
+
+  /* Platform row */
+  .platform-row { display: flex; gap: 10px; }
+
+  /* API key notice */
+  .api-notice { background: #1a0a0a; border: 1px solid #4a1a1a; border-radius: 10px; padding: 14px; }
+  .api-notice p { color: #f87171; font-size: 13px; margin-bottom: 8px; }
+  .api-notice input { border-color: #4a1a1a; }
+
+  select option { background: #0f0c2e; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-eyebrow">Kevin Matt · NLP Coaching</div>
+  <div class="header-title">Content Studio</div>
+  <p class="header-sub">Posts generieren · speichern · publizieren</p>
+</div>
+
+<!-- Metricool Bar -->
+<div class="metricool-bar">
+  <span>📅 Metricool</span>
+  <button onclick="window.open('https://app.metricool.com/','_blank')">Dashboard öffnen →</button>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('generate', this)">✨ Post Generator</button>
+  <button class="tab" onclick="switchTab('saved', this)">💾 Gespeichert</button>
+  <button class="tab" onclick="switchTab('report', this)">📄 Kunden Report</button>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- ── TAB: POST GENERATOR ── -->
+  <div id="panel-generate" class="panel active">
+
+    <!-- API Key -->
+    <div class="api-notice" id="api-notice">
+      <p>🔑 Anthropic API-Schlüssel eingeben (einmalig, wird lokal gespeichert)</p>
+      <div style="display:flex;gap:8px;">
+        <input type="password" id="api-key-input" placeholder="sk-ant-..." style="flex:1;" />
+        <button class="btn-ghost" onclick="saveApiKey()" style="white-space:nowrap;">Speichern</button>
+      </div>
+    </div>
+
+    <!-- Platform -->
+    <div>
+      <label>Plattform</label>
+      <div class="platform-row">
+        <button class="btn-platform active" id="btn-ig" onclick="setPlatform('Instagram')">📸 Instagram</button>
+        <button class="btn-platform" id="btn-li" onclick="setPlatform('LinkedIn')">💼 LinkedIn</button>
+      </div>
+    </div>
+
+    <!-- Bilder -->
+    <div>
+      <label>Bilder hochladen (1 oder mehrere → Collage)</label>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+        <input type="file" id="file-input" accept="image/*" multiple onchange="handleFiles(this.files)" />
+        <div style="font-size:28px;margin-bottom:8px;">🖼</div>
+        <div>Bilder hier ablegen oder klicken</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">Mehrere Bilder → automatische Collage</div>
+      </div>
+      <div id="image-grid" class="image-grid" style="display:none;margin-top:10px;"></div>
+    </div>
+
+    <!-- Stichworte -->
+    <div>
+      <label>Kernbotschaft / Stichworte</label>
+      <textarea id="notes" rows="4" placeholder="Was willst du vermitteln? z.B. 'Ich sass im Zug ohne Netz und musste mir selbst vertrauen – das hat mich etwas über innere Stärke gelehrt'"></textarea>
+    </div>
+
+    <button class="btn-primary" onclick="generatePost()" id="gen-btn">✨ Post generieren</button>
+    <div id="gen-spinner" style="display:none;" class="spinner"><div class="spinner-dot"></div><span style="font-size:13px;">KI generiert deinen Post...</span></div>
+
+    <!-- Ergebnis -->
+    <div id="result-card" class="card" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span class="result-label" id="result-platform-label">Dein Post</span>
+        <button class="btn-ghost" id="copy-post-btn" onclick="copyText('post-output', 'copy-post-btn')">📋 Kopieren</button>
+      </div>
+
+      <!-- Collage Preview -->
+      <div id="collage-preview" style="display:none;margin-bottom:14px;">
+        <canvas id="collage-canvas" style="width:100%;border-radius:8px;border:1px solid var(--border2);"></canvas>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn-ghost" onclick="downloadCollage()" style="flex:1;">⬇ Collage herunterladen</button>
+        </div>
+      </div>
+
+      <div id="post-output" class="result-text"></div>
+      <hr class="card-divider">
+
+      <!-- Hashtags -->
+      <div id="hashtag-section">
+        <button class="btn-ghost" onclick="generateHashtags()" id="tag-btn" style="width:100%;"># Hashtags generieren</button>
+        <div id="tag-spinner" style="display:none;" class="spinner"><div class="spinner-dot"></div><span style="font-size:13px;">Hashtags laden...</span></div>
+        <div id="hashtag-output" style="display:none;margin-top:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="color:var(--muted);font-size:12px;">Hashtags</span>
+            <button class="btn-ghost" id="copy-tag-btn" onclick="copyText('hashtag-text', 'copy-tag-btn')">📋 Kopieren</button>
+          </div>
+          <p id="hashtag-text" style="color:var(--purple);font-size:13px;line-height:1.9;"></p>
+        </div>
+      </div>
+
+      <hr class="card-divider">
+      <!-- Aktionen -->
+      <div class="action-grid">
+        <button class="btn-ghost" id="open-platform-btn" onclick="openPlatform()">📸 Instagram öffnen</button>
+        <button class="btn-ghost" onclick="window.open('https://app.metricool.com/','_blank')" style="border-color:var(--blue);color:var(--blue);">📅 Metricool</button>
+      </div>
+      <button class="btn-ghost" onclick="savePost()" id="save-btn" style="width:100%;margin-top:8px;text-align:center;">💾 Post speichern</button>
+    </div>
+  </div>
+
+  <!-- ── TAB: GESPEICHERT ── -->
+  <div id="panel-saved" class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span id="saved-count" style="color:var(--muted);font-size:13px;"></span>
+      <button class="btn-ghost" onclick="loadSavedPosts()">↻ Aktualisieren</button>
+    </div>
+    <div id="saved-list"></div>
+  </div>
+
+  <!-- ── TAB: KUNDEN REPORT ── -->
+  <div id="panel-report" class="panel">
+    <div class="info-box">📄 Professionelle Vorher-Nachher-Dokumentation für Kundenpräsentationen.</div>
+
+    <div>
+      <label>Kundenname / Account</label>
+      <input id="r-client" placeholder="z.B. @nina.loacker" />
+    </div>
+    <div>
+      <label>Vorher – Situation vor der Zusammenarbeit</label>
+      <textarea id="r-before" rows="3" placeholder="Unstrukturierter Feed, keine einheitlichen Farben, kaum Engagement..."></textarea>
+    </div>
+    <div>
+      <label>Nachher – Was habt ihr verändert?</label>
+      <textarea id="r-after" rows="3" placeholder="Klares Corporate Design, strukturierte Reels-Cover, Content-Plan..."></textarea>
+    </div>
+    <div>
+      <label>Kennzahlen (optional)</label>
+      <input id="r-metrics" placeholder="+2400 Follower in 3 Monaten, Reichweite x5..." />
+    </div>
+    <button class="btn-primary" onclick="generateReport()">📄 Report erstellen</button>
+    <div id="report-spinner" style="display:none;" class="spinner"><div class="spinner-dot"></div><span style="font-size:13px;">Report wird erstellt...</span></div>
+    <div id="report-card" class="card" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span class="result-label">Kunden Report</span>
+        <button class="btn-ghost" id="copy-report-btn" onclick="copyText('report-output', 'copy-report-btn')">📋 Kopieren</button>
+      </div>
+      <div id="report-output" style="font-size:14px;line-height:1.8;"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────
+let platform = 'Instagram';
+let images = []; // {file, dataUrl}
+let currentPost = '';
+let currentHashtags = '';
+let currentCollageDataUrl = null;
+
+// ── API KEY ────────────────────────────────────────────────────────
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) return;
+  localStorage.setItem('kms_api_key', key);
+  document.getElementById('api-notice').style.display = 'none';
+  alert('API-Schlüssel gespeichert ✓');
+}
+function getApiKey() {
+  return localStorage.getItem('kms_api_key') || '';
+}
+window.addEventListener('DOMContentLoaded', () => {
+  if (getApiKey()) document.getElementById('api-notice').style.display = 'none';
+  loadSavedPosts();
+});
+
+// ── TABS ───────────────────────────────────────────────────────────
+function switchTab(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'saved') loadSavedPosts();
+}
+
+// ── PLATFORM ───────────────────────────────────────────────────────
+function setPlatform(p) {
+  platform = p;
+  document.getElementById('btn-ig').classList.toggle('active', p === 'Instagram');
+  document.getElementById('btn-li').classList.toggle('active', p === 'LinkedIn');
+  const label = document.getElementById('result-platform-label');
+  if (label) label.textContent = 'Dein ' + p + '-Post';
+  const openBtn = document.getElementById('open-platform-btn');
+  if (openBtn) openBtn.textContent = p === 'Instagram' ? '📸 Instagram öffnen' : '💼 LinkedIn öffnen';
+}
+
+function openPlatform() {
+  const url = platform === 'Instagram'
+    ? 'https://www.instagram.com/create/story/'
+    : 'https://www.linkedin.com/feed/';
+  window.open(url, '_blank');
+}
+
+// ── IMAGE HANDLING ─────────────────────────────────────────────────
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      images.push({ file, dataUrl: e.target.result });
+      renderImageGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function handleDrop(e) {
+  e.preventDefault();
+  handleFiles(e.dataTransfer.files);
+}
+function removeImage(idx) {
+  images.splice(idx, 1);
+  renderImageGrid();
+}
+function renderImageGrid() {
+  const grid = document.getElementById('image-grid');
+  if (images.length === 0) { grid.style.display = 'none'; grid.innerHTML = ''; return; }
+  grid.style.display = 'grid';
+  grid.innerHTML = images.map((img, i) => `
+    <div class="image-thumb-wrap">
+      <img src="${img.dataUrl}" alt="Bild ${i+1}">
+      <button class="img-remove" onclick="removeImage(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+// ── COLLAGE ────────────────────────────────────────────────────────
+async function buildCollage() {
+  if (images.length === 0) return null;
+  if (images.length === 1) return images[0].dataUrl;
+
+  const canvas = document.getElementById('collage-canvas');
+  const ctx = canvas.getContext('2d');
+  const SIZE = 1080;
+  canvas.width = SIZE;
+  canvas.height = SIZE;
+
+  const n = images.length;
+  const cols = n <= 2 ? n : Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / cols);
+  const cellW = SIZE / cols;
+  const cellH = SIZE / rows;
+  const gap = 4;
+
+  ctx.fillStyle = '#060414';
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  await Promise.all(images.map((img, i) => new Promise(resolve => {
+    const el = new Image();
+    el.onload = () => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = col * cellW + gap / 2;
+      const y = row * cellH + gap / 2;
+      const w = cellW - gap;
+      const h = cellH - gap;
+
+      // Cover fit
+      const scale = Math.max(w / el.width, h / el.height);
+      const sw = w / scale;
+      const sh = h / scale;
+      const sx = (el.width - sw) / 2;
+      const sy = (el.height - sh) / 2;
+      ctx.drawImage(el, sx, sy, sw, sh, x, y, w, h);
+      resolve();
+    };
+    el.src = img.dataUrl;
+  })));
+
+  return canvas.toDataURL('image/jpeg', 0.92);
+}
+
+function downloadCollage() {
+  if (!currentCollageDataUrl) return;
+  const a = document.createElement('a');
+  a.href = currentCollageDataUrl;
+  a.download = 'collage_' + Date.now() + '.jpg';
+  a.click();
+}
+
+// ── CLAUDE API ─────────────────────────────────────────────────────
+async function callClaude(prompt) {
+  const key = getApiKey();
+  if (!key) { alert('Bitte zuerst API-Schlüssel eingeben.'); throw new Error('No API key'); }
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+  });
+  if (!res.ok) throw new Error('API Fehler ' + res.status);
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
+}
+
+// ── POST GENERATOR ─────────────────────────────────────────────────
+async function generatePost() {
+  const notes = document.getElementById('notes').value.trim();
+  if (!notes) return;
+
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('gen-spinner').style.display = 'flex';
+  document.getElementById('result-card').style.display = 'none';
+  document.getElementById('hashtag-output').style.display = 'none';
+  document.getElementById('save-btn').textContent = '💾 Post speichern';
+  document.getElementById('save-btn').style.color = '';
+  document.getElementById('save-btn').style.borderColor = '';
+  currentPost = ''; currentHashtags = ''; currentCollageDataUrl = null;
+
+  // Collage bauen
+  let collageDataUrl = null;
+  if (images.length > 0) {
+    collageDataUrl = await buildCollage();
+    currentCollageDataUrl = collageDataUrl;
+  }
+
+  // Bild-Kontext für Prompt
+  let imageContext = '';
+  if (images.length === 1) imageContext = '\nEs gibt EIN Bild dazu. Integriere das Bild in den Post – beschreibe es kurz metaphorisch oder nutze es als Aufhänger, damit Text und Bild eine Einheit bilden.';
+  else if (images.length > 1) imageContext = `\nEs gibt eine Collage aus ${images.length} Bildern. Nutze das als visuellen Anker und beziehe dich darauf im Post.`;
+
+  const prompt = `Du bist der Social-Media-Texter von Kevin Matt, NLP-Coach in der Schweiz.
+
+Kevin's Stil: direkt, transformierend, NLP-basiert. Von WEG (Schmerz/Problem) zu HIN (Lösung/Transformation). Er spricht Menschen an, die ihr Leben bewusst gestalten wollen.
+
+PLATTFORM: ${platform}
+STICHWORTE: ${notes}${imageContext}
+
+REGELN:
+1. KEIN ß – nur ss (weiss, gross, Bewusstsein)
+2. Korrekte Umlaute: ä, ö, ü
+3. Hook erste Zeile – kurz, provokativ, emotional
+4. NLP: Problem → Perspektivwechsel → Transformation
+5. Absätze: 2-3 Zeilen, dann Leerzeile
+6. CAPS für Betonung, keine Sternchen
+7. Call-to-Action am Ende
+8. ${platform === 'Instagram' ? '150-200 Wörter, emotional' : '250-320 Wörter, professionell mit Mehrwert'}
+
+Nur den Post-Text, keine Erklärungen.`;
+
+  try {
+    const text = await callClaude(prompt);
+    currentPost = text;
+    document.getElementById('post-output').textContent = text;
+    document.getElementById('result-platform-label').textContent = 'Dein ' + platform + '-Post';
+    document.getElementById('result-card').style.display = 'block';
+
+    // Collage Preview
+    if (collageDataUrl && images.length > 1) {
+      const canvas = document.getElementById('collage-canvas');
+      canvas.style.display = 'block';
+      document.getElementById('collage-preview').style.display = 'block';
+    } else if (collageDataUrl && images.length === 1) {
+      // Single image preview via canvas
+      const canvas = document.getElementById('collage-canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width; canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        canvas.style.display = 'block';
+        document.getElementById('collage-preview').style.display = 'block';
+      };
+      img.src = collageDataUrl;
+    }
+  } catch(e) {
+    document.getElementById('post-output').textContent = 'Fehler: ' + e.message;
+    document.getElementById('result-card').style.display = 'block';
+  }
+
+  document.getElementById('gen-btn').disabled = false;
+  document.getElementById('gen-spinner').style.display = 'none';
+}
+
+// ── HASHTAGS ───────────────────────────────────────────────────────
+async function generateHashtags() {
+  const notes = document.getElementById('notes').value.trim();
+  document.getElementById('tag-btn').style.display = 'none';
+  document.getElementById('tag-spinner').style.display = 'flex';
+
+  const prompt = `Erstelle 10 Hashtags für ${platform} im Bereich NLP-Coaching / persönliche Transformation / Bewusstsein.
+Thema: ${notes}
+Mix: 3 grosse (>500k), 4 mittlere (50k-500k), 3 Nischen (NLP, Coaching Schweiz).
+Nur Hashtags, Leerzeichen-getrennt, eine Zeile, kein ß.`;
+
+  try {
+    const tags = await callClaude(prompt);
+    currentHashtags = tags.trim();
+    document.getElementById('hashtag-text').textContent = currentHashtags;
+    document.getElementById('hashtag-output').style.display = 'block';
+  } catch(e) {
+    document.getElementById('hashtag-text').textContent = 'Fehler.';
+    document.getElementById('hashtag-output').style.display = 'block';
+  }
+  document.getElementById('tag-spinner').style.display = 'none';
+}
+
+// ── COPY ───────────────────────────────────────────────────────────
+function copyText(sourceId, btnId) {
+  const el = document.getElementById(sourceId);
+  const text = el.textContent || el.innerText;
+  const btn = document.getElementById(btnId);
+
+  const doFeedback = (ok) => {
+    btn.textContent = ok ? '✓ Kopiert!' : '⚠ Fehler';
+    btn.className = 'btn-ghost ' + (ok ? 'copy-ok' : 'copy-err');
+    setTimeout(() => { btn.textContent = '📋 Kopieren'; btn.className = 'btn-ghost'; }, 2200);
+  };
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => doFeedback(true)).catch(() => fallbackCopy(text, doFeedback));
+  } else {
+    fallbackCopy(text, doFeedback);
+  }
+}
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); cb(true); } catch { cb(false); }
+  document.body.removeChild(ta);
+}
+
+// ── SAVE POST ──────────────────────────────────────────────────────
+function savePost() {
+  if (!currentPost) return;
+  const entry = {
+    id: Date.now(),
+    platform,
+    notes: document.getElementById('notes').value.trim(),
+    post: currentPost,
+    hashtags: currentHashtags,
+    collage: currentCollageDataUrl,
+    createdAt: Date.now()
+  };
+  const all = getSavedPosts();
+  all.unshift(entry);
+  localStorage.setItem('kms_posts', JSON.stringify(all));
+
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '✓ Gespeichert!';
+  btn.style.color = 'var(--green)';
+  btn.style.borderColor = 'var(--green)';
+  setTimeout(() => {
+    btn.textContent = '💾 Post speichern';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  }, 2500);
+}
+function getSavedPosts() {
+  try { return JSON.parse(localStorage.getItem('kms_posts') || '[]'); } catch { return []; }
+}
+function deletePost(id) {
+  const all = getSavedPosts().filter(p => p.id !== id);
+  localStorage.setItem('kms_posts', JSON.stringify(all));
+  loadSavedPosts();
+}
+
+// ── LOAD SAVED ─────────────────────────────────────────────────────
+function loadSavedPosts() {
+  const posts = getSavedPosts();
+  const list = document.getElementById('saved-list');
+  const count = document.getElementById('saved-count');
+  count.textContent = posts.length + ' gespeicherte Posts';
+
+  if (posts.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">📭</div><div>Noch keine Posts gespeichert.</div><div style="font-size:13px;margin-top:6px;color:var(--muted2);">Generiere deinen ersten Post im Tab "Post Generator".</div></div>';
+    return;
+  }
+
+  list.innerHTML = posts.map(p => `
+    <div class="post-item" style="margin-bottom:10px;">
+      <div class="post-item-header" onclick="togglePost(${p.id})">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span class="badge">${p.platform === 'Instagram' ? '📸' : '💼'} ${p.platform}</span>
+            <span class="date-label">${formatDate(p.createdAt)}</span>
+          </div>
+          <div style="color:var(--muted);font-size:13px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${escHtml(p.notes)}</div>
+        </div>
+        <button onclick="event.stopPropagation();deletePost(${p.id})" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:18px;padding:0 0 0 10px;">✕</button>
+      </div>
+      <div class="post-item-body" id="post-body-${p.id}" style="display:none;">
+        ${p.collage ? `<img src="${p.collage}" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-bottom:12px;border:1px solid var(--border2);">` : ''}
+        <pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.8;color:var(--text);margin:0 0 10px;" id="saved-post-text-${p.id}">${escHtml(p.post)}</pre>
+        ${p.hashtags ? `<p id="saved-tags-${p.id}" style="color:var(--purple);font-size:12px;margin:0 0 12px;line-height:1.9;">${escHtml(p.hashtags)}</p>` : ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-ghost" id="copy-saved-${p.id}" onclick="copyText('saved-post-text-${p.id}','copy-saved-${p.id}')">📋 Post kopieren</button>
+          ${p.hashtags ? `<button class="btn-ghost" id="copy-stag-${p.id}" onclick="copyText('saved-tags-${p.id}','copy-stag-${p.id}')" style="border-color:var(--purple);color:var(--purple);"># Tags kopieren</button>` : ''}
+          <button class="btn-ghost" onclick="window.open('https://app.metricool.com/','_blank')" style="border-color:var(--blue);color:var(--blue);">📅 Metricool</button>
+          ${p.collage ? `<button class="btn-ghost" onclick="downloadSaved(${p.id})">⬇ Bild</button>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function togglePost(id) {
+  const body = document.getElementById('post-body-' + id);
+  body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+function downloadSaved(id) {
+  const p = getSavedPosts().find(x => x.id === id);
+  if (!p || !p.collage) return;
+  const a = document.createElement('a');
+  a.href = p.collage;
+  a.download = 'post_' + id + '.jpg';
+  a.click();
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function formatDate(ts) {
+  return new Date(ts).toLocaleDateString('de-CH', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+// ── REPORT ─────────────────────────────────────────────────────────
+async function generateReport() {
+  const before = document.getElementById('r-before').value.trim();
+  const after = document.getElementById('r-after').value.trim();
+  if (!before || !after) return;
+
+  document.getElementById('report-spinner').style.display = 'flex';
+  document.getElementById('report-card').style.display = 'none';
+
+  const prompt = `Du erstellst einen professionellen Vorher-Nachher-Report für eine Social-Media-Agentur (NLP & Coaching, Schweiz).
+
+KUNDE: ${document.getElementById('r-client').value || 'Kunde'}
+VORHER: ${before}
+NACHHER: ${after}
+${document.getElementById('r-metrics').value ? 'KENNZAHLEN: ' + document.getElementById('r-metrics').value : ''}
+
+Report-Struktur:
+
+## 📋 Ausgangssituation
+3-4 Sätze, einfühlsam.
+
+## 🚀 Unsere Strategie
+Konkrete Massnahmen als Bullet Points.
+
+## ✅ Transformation & Ergebnisse
+Messbare Veränderungen als Bullet Points.
+
+## 💬 Warum es funktioniert
+Kurze strategische Begründung.
+
+## 🎯 Nächste Schritte
+3 konkrete Massnahmen.
+
+Schweizer Rechtschreibung, kein ß.`;
+
+  try {
+    const text = await callClaude(prompt);
+    document.getElementById('report-output').innerHTML = text
+      .replace(/## (.*)/g, '<h3 style="color:var(--purple-pale);margin:16px 0 6px">$1</h3>')
+      .replace(/\n/g, '<br>');
+    document.getElementById('report-card').style.display = 'block';
+  } catch(e) {
+    document.getElementById('report-output').textContent = 'Fehler: ' + e.message;
+    document.getElementById('report-card').style.display = 'block';
+  }
+  document.getElementById('report-spinner').style.display = 'none';
+}
+</script>
+</body>
+</html>
